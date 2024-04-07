@@ -2,13 +2,37 @@
   "name": "momvan",
   "module": "index.ts",
   "type": "module",
+  "version": "1.0.0",
+  "description": "A simple library for adding classes to vanjs",
+  "scripts": {
+    "build": "bun run build.mjs",
+    "prepublishOnly": "bun run build"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@happy-dom/global-registrator": "^14.7.0",
+    "@types/bun": "latest",
+    "bun-plugin-dts": "^0.2.1",
+    "rimraf": "^5.0.5"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"
   },
   "dependencies": {
     "vanjs-core": "^1.5.0"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/UserNobody14/momvan.git"
+  },
+  "keywords": [
+    "vanjs",
+    "momvan"
+  ],
+  "homepage": "https://github.com/wobsoriano/pkg-name#readme",
+  "author": "UserNobody14",
+  "license": "MIT",
+  "files": [
+    "dist/*.js",
+    "dist/*.d.ts"
+  ]
 }

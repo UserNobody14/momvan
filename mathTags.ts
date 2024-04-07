@@ -126,3 +126,12 @@ export const svgSet = new Set(svgTags);
 export const mathNs = "http://www.w3.org/1998/Math/MathML";
 export const svgNs = "http://www.w3.org/2000/svg";
 
+export function mathSvgAuto(pathway: string[], prop: string, target: any) {
+    if (pathway.length === 0) {
+        if (mathSet.has(prop))
+        return target(mathNs);
+    if (svgSet.has(prop))
+        return target(svgNs);
+    }
+    return target;
+}
