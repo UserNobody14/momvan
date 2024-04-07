@@ -55,17 +55,20 @@ const correctClassName = (className: string, config1: typeof config) => {
 // Wrapper
 //
 ///////////////
-export const wrapperFn = (target: TagMap, opts: WrappedFnTypes = {}): TagMap => {
+export const wrapperFn = (target1: TagMap, opts: WrappedFnTypes = {}): TagMap => {
     const {
         pathway = [], classes: classes1 = [], ...rest
     } = opts;
-    return new Proxy(target, {
+    return new Proxy(target1, {
         get: (target, prop, _receiver): any => {
             // Ignore the $$typeof and prototype properties
-            if (prop === '$$typeof' || prop === 'prototype')
+            if (prop === '$$typeof' || prop === 'prototype') {
                 return (target)[prop];
-            if (typeof prop === 'symbol')
+            }
+            if (typeof prop === 'symbol') {
                 return target[prop as any];
+            }
+
             let result = target;
             let classes = [...classes1, correctClassName(prop, rest.classConversionConfig ?? config)];
             if (rest.changeResultFn)
@@ -86,10 +89,10 @@ export const wrapperFn = (target: TagMap, opts: WrappedFnTypes = {}): TagMap => 
         /**
          * Apply the classes to the element
          */
-        apply: (target, _thisArg, args) => {
+        apply: (target2, _thisArg, args) => {
             // If this is the first call, return the result of the namespace fn
             if (pathway.length === 0)
-                return wrapperFn((target as any)(...args), { pathway: [], classes: [], ...rest });
+                return wrapperFn((target2 as any)(...args), { pathway: [], classes: [], ...rest });
             let [props, ...children] = protoOf(args[0] ?? 0) === objProto ? args : [{}, ...args];
             const otherClasses1 = `${props.class ?? ''} ${classes1.join(' ')} ${rest.carryOtherProps?.class ?? ''} ${
                 rest.carryOtherProps?.className ?? ''
@@ -101,7 +104,7 @@ export const wrapperFn = (target: TagMap, opts: WrappedFnTypes = {}): TagMap => 
                 ...(rest.carryOtherProps ?? {}),
                 ...withClasses
             };
-            return (target as any)(newProps, ...children);
+            return (target2 as any)(newProps, ...children);
         }
     });
 };

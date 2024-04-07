@@ -12,9 +12,98 @@ To run:
 bun run index.ts
 ```
 
-# What this is?
+# What is this?
 
 Momvan is a set of utilities that make working with vanjs much easier for me. All of the utilities are designed to work together, and provide a compact system for expressing frontend GUIs.
+
+You can use the whole system easily like so:
+
+```html
+<html>
+    <head>
+        <!-- Just an example, momvan works with any css! -->
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body>
+        <script type="module">
+            import van from 'https://cdn.jsdelivr.net/npm/momvan@1.0.1/dist/index.js';
+
+            // setup tags the standard van way
+            const {
+                div,
+                button,
+                h2
+            } = van.tags;
+
+            // setup some classes
+            const bigRed = div.bgRed500.textLg;
+
+            // setup some routes
+            const route = van.createRouter();
+
+            // setup a form
+            const {
+                state,
+                form,
+                inputs,
+                submit,
+            } = van.createForm({
+                onSubmit: (values) => {
+                    if (values.password === 'correct') {
+                        van.routeTo('profile', values.username);
+                    } else {
+                        van.routeTo('error');
+                    }
+                }
+            });
+
+            // Put it all together!
+            van.add(
+                document.body,
+                div(
+                    route.login(
+                        form.container.bgGray800(
+                            inputs.username.w24(),
+                            inputs.password.w24(),
+                            submit('Log In')
+                        )
+                    ),
+                    route.profile[':user'](
+                        (params) => {
+                            return div.wFull(
+                                p.textXl.textBlue600(
+                                    () => `Welcome ${params?.user}`
+                                ),
+                                button.bgRed500(
+                                    {
+                                        onclick: () => routeTo('login')
+                                    },
+                                    'Logout'
+                                )
+                            );
+                        }
+                    ),
+                    route.error(
+                        div.hFull.wFull(
+                            h4.p8(
+                                () => `Error, user: ${state.val.username} entered an incorrect password!`
+                            ),
+                            button.bgRed500(
+                                {
+                                    onclick: () => routeTo('login')
+                                },
+                                'Go back'
+                            )
+                        )
+                    )
+                )
+            );
+
+
+        </script>
+    </body>
+</html>
+```
 
 ## Classes
 Wrap each result of van.tags with a Proxy that on each get request returns another proxy

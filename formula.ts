@@ -149,7 +149,11 @@ import { wrapperFn } from './wrapperFn';
  * textarea
  */
 
-export const createForm = () => {
+export interface FormConfig {
+    onSubmit?: (e: any) => void;
+}
+
+export const createForm = (formInputs: FormConfig) => {
 
     const state = van.state<any>({});
 
@@ -158,12 +162,14 @@ export const createForm = () => {
             const customInput = wrapperFn(van.tags as any, { 
                 classes: [], pathway: [],
                 carryOtherProps: { 
+                    // TODO: add more input types
                     type: 'text',
-                    onchange: van.derive(() => (e: any) => {
+                    // TODO: make input change only the field it's associated with
+                    onchange: (e: any) => {
                         const cc = state.val
-                        cc[p] = e.target.value;
-                        state.val = cc;
-                    }),
+                        const newCC = { ...cc, [p]: e.target.value };
+                        state.val = newCC;
+                    },
                     value: () => state.val[p],
                     name: p,
                 },
@@ -177,31 +183,33 @@ export const createForm = () => {
         classes: [], pathway: [],
         carryOtherProps: { 
             type: 'submit',
-            // onchange: van.derive(() => (e: any) => {
-            //     const cc = state.val
-            //     cc[p] = e.target.value;
-            //     state.val = cc;
-            // }),
-            // value: () => state.val[p],
-            // name: p,
         },
     });
     const customReset = wrapperFn(van.tags as any, { 
         classes: [], pathway: [],
         carryOtherProps: { 
             type: 'reset',
-            // onchange: van.derive(() => (e: any) => {
-            //     const cc = state.val
-            //     cc[p] = e.target.value;
-            //     state.val = cc;
-            // }),
-            // value: () => state.val[p],
-            // name: p,
+        },
+    });
+
+    const customForm = wrapperFn(van.tags as any, {
+        classes: [], pathway: [],
+        carryOtherProps: {
+            onsubmit: (e: { preventDefault: () => void; target: HTMLFormElement | undefined; }) => {
+                if (formInputs.onSubmit) {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    // output as an object
+                    const values = Object.fromEntries(formData as any);
+                    state.val = values;
+                    formInputs.onSubmit(values);
+                }
+            }
         },
     });
 
     return {
-        form: null,
+        form: customForm.form,
         inputs,
         buttons: {
             submit: customSubmit.button,

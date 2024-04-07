@@ -21,39 +21,39 @@ const { div: useBetterDiv } = van.tags;
  */
 //
 
-export type RouteMatcherObject = { 
-        not: RouteMatcher;
-    } |
-    { 
-        regex: RegExp;
-    } |
-    { 
-        notRegex: RegExp;
-    } |
-    { 
-        optional: RouteMatcher;
-    } |
-    { 
-        multiple: RouteMatcher;
-    } |
-    { 
-        oneOf: RouteMatcher[];
-    } |
-    { 
-        allOf: RouteMatcher[];
-    } |
-    { 
-        param: { name: string; test: RouteMatcher; };
-    } |
-    { 
-        escape: RouteMatcher;
-    } |
-    {
-        matchAny: true
-    } |
-    { 
-        fn: (segment: string) => { matches: boolean, increment?: number, params?: any, hasParams?: boolean };
-    };
+export type RouteMatcherObject = {
+    not: RouteMatcher;
+} |
+{
+    regex: RegExp;
+} |
+{
+    notRegex: RegExp;
+} |
+{
+    optional: RouteMatcher;
+} |
+{
+    multiple: RouteMatcher;
+} |
+{
+    oneOf: RouteMatcher[];
+} |
+{
+    allOf: RouteMatcher[];
+} |
+{
+    param: { name: string; test: RouteMatcher; };
+} |
+{
+    escape: RouteMatcher;
+} |
+{
+    matchAny: true
+} |
+{
+    fn: (segment: string) => { matches: boolean, increment?: number, params?: any, hasParams?: boolean };
+};
 
 export type RouteMatcher = string | RouteMatcherObject;
 
@@ -105,9 +105,12 @@ const getParamName = (prop: RouteMatcher) => {
 }
 
 const routeMaster = (cr: RoutePassthrough) => {
+
     const ll = cr.currentRoute.path
+
     return (ll2?: Record<string, string>, exampleRoute?: ActiveRoute) => {
         let buildPath = cr.baseRoute ?? '';
+
         let failure = false;
         for (let i = 0; i < ll.length; i++) {
             const v = ll[i];
@@ -123,10 +126,10 @@ const routeMaster = (cr: RoutePassthrough) => {
                 buildPath += `/${v}`;
             } else if (typeof v === 'object') {
                 if (
-                    ('matchAny' in v ) || ('multiple' in v) || ('oneOf' in v) || ('allOf' in v) || 
+                    ('matchAny' in v) || ('multiple' in v) || ('oneOf' in v) || ('allOf' in v) ||
                     ('fn' in v) || ('escape' in v) || ('optional' in v) || ('not' in v) ||
-                     ('param' in v)
-                    ) {
+                    ('param' in v)
+                ) {
                     continue;
                 }
                 if (exampleRoute) {
@@ -139,7 +142,7 @@ const routeMaster = (cr: RoutePassthrough) => {
                             console.error(`Failed to match regex at segment ${i} with ${segment}`);
                             failure = true;
                         }
-                    
+
                     }
                     if ('escape' in v) {
                         const segment = exampleRoute.routePath[i];
@@ -149,7 +152,6 @@ const routeMaster = (cr: RoutePassthrough) => {
                             console.error(`Failed to match escape at segment ${i} with ${segment}`);
                             failure = true;
                         }
-            
                     }
                 }
             }
@@ -255,11 +257,11 @@ const matchSegment = (segment: string, prop: RouteMatcher, furtherSegments = [])
     return { matches: segment === prop };
 }
 
-const applyRouteMatch = (activeRoute: ActiveRoute = { routePath: [] }, currentRoute: RoutePassthrough = { 
+const applyRouteMatch = (activeRoute: ActiveRoute = { routePath: [] }, currentRoute: RoutePassthrough = {
     currentRoute: {
-    path: []
+        path: []
     }
- }) => {
+}) => {
     const aPath = activeRoute.routePath;
     const cPath = currentRoute.currentRoute.path;
     let show = false,
@@ -335,48 +337,20 @@ export type ExtraKeysAsFinal<T extends RouteInputs> = {
 };
 export type FinalRouteObject<T extends RouteInputs> = RecursiveRouteMap<T> & ExtraKeysAsFinal<T> & TagFunc<T>;
 
+const matchKeyFn = <A, B extends RouteMatcher, T extends RouteInputs>(fn: (a: A) => B) => (route: RoutePassthrough) => (prop: A): FinalRouteObject<T> => {
+    return withRouterFn<T>(
+        addPropToRoute(route, fn(prop))
+    )
+}
+class ExtraKeyObject<T extends RouteInputs> {
+    not = matchKeyFn<RouteMatcher, RouteMatcher, T>((prop) => ({ not: prop }));
+    regex = matchKeyFn<RegExp | string, RouteMatcher, T>((prop) => ({ regex: RegExp(prop) }));
+    notRegex = matchKeyFn<RegExp | string, RouteMatcher, T>((prop) => ({ notRegex: RegExp(prop) }));
+    optional = matchKeyFn<RouteMatcher, RouteMatcher, T>((prop) => ({ optional: prop }));
+    multiple = matchKeyFn<RouteMatcher, RouteMatcher, T>((prop) => ({ multiple: prop }));
+    escape = matchKeyFn<string, RouteMatcher, T>((prop) => ({ escape: prop }));
+    fn = matchKeyFn<(segment: string) => { matches: boolean, increment?: number, params?: any, hasParams?: boolean }, RouteMatcher, T>((prop) => ({ fn: prop }));
 
-class ExtraKeyObject <T extends RouteInputs> {
-    not = (prps: RoutePassthrough) => (prop: RouteMatcher): FinalRouteObject<T> => {
-        return withRouterFn<T>(
-            addPropToRoute(prps, {
-                not: prop,
-                // eager: false,
-            })
-        )
-    }
-
-    regex = (prps: RoutePassthrough) => (prop: RegExp | string): FinalRouteObject<T> => {
-        return withRouterFn<T>(
-            addPropToRoute(prps, {
-                regex: RegExp(prop),
-            })
-        )
-    }
-
-    notRegex = (prps: RoutePassthrough) => (prop: RegExp | string): FinalRouteObject<T> => {
-        return withRouterFn<T>(
-            addPropToRoute(prps, {
-                notRegex: RegExp(prop),
-            })
-        )
-    }
-
-    optional = (prps: RoutePassthrough) => (prop: RouteMatcher): FinalRouteObject<T> => {
-        return withRouterFn<T>(
-            addPropToRoute(prps, {
-                optional: prop,
-            })
-        )
-    }
-
-    multiple = (prps: RoutePassthrough) => (prop: RouteMatcher): FinalRouteObject<T> => {
-        return withRouterFn<T>(
-            addPropToRoute(prps, {
-                multiple: prop,
-            })
-        )
-    }
 
     oneOf = (prps: RoutePassthrough) => (...props: RouteMatcher[]): FinalRouteObject<T> => {
         return withRouterFn<T>(
@@ -405,24 +379,6 @@ class ExtraKeyObject <T extends RouteInputs> {
         )
     }
 
-    escape = (prps: RoutePassthrough) => (prop: string): FinalRouteObject<T> => {
-        return withRouterFn<T>(
-            addPropToRoute(prps, {
-                escape: prop,
-            })
-        )
-    }
-
-    fn = (prps: RoutePassthrough) => (fn: 
-        (segment: string) => { matches: boolean, increment?: number, params?: any, hasParams?: boolean }
-        ): FinalRouteObject<T> => {
-        return withRouterFn<T>(
-            addPropToRoute(prps, {
-                fn,
-            })
-        )
-    }
-
     any = (prps: RoutePassthrough): FinalRouteObject<T> => {
         return withRouterFn<T>(
             addPropToRoute(prps, {
@@ -441,10 +397,27 @@ class ExtraKeyObject <T extends RouteInputs> {
     //// Get a goto function for the route
 
     goto = (prps: RoutePassthrough) => {
-        return (params: Record<string, string>) => {
-            // Fill in the params
-            return routeMaster(prps)(params, activeRoute.val);
 
+        return (params?: Record<string, string>) => {
+
+            // Fill in the params
+            return routeTo(routeMaster(prps)(params, activeRoute.val));
+
+        }
+    }
+
+    getRoute = (prps: RoutePassthrough) => {
+
+        return (params?: Record<string, string>) => {
+
+            const adjustedFn = routeMaster(prps);
+
+            // Fill in the params
+            const rrm = adjustedFn(params, activeRoute.val);
+            console.log("COMPLETED ROUTEMASTERE!", typeof rrm);
+            console.log("COMPLETED ROUTEMASTERE!", rrm);
+            //
+            return rrm;
         }
     }
 
@@ -480,6 +453,15 @@ const withRouterFn = <T extends RouteInputs>(prps: RoutePassthrough): FinalRoute
         },
         {
             get(target, prop, receiver) {
+                if (prop === 'toString') {
+                    return extraKeys1.getRoute(prps);
+                }
+                if (prop === 'valueOf') {
+                    return (target as any).valueOf;
+                }
+                if (prop === Symbol.toPrimitive) {
+                    return (target as any)[Symbol.toPrimitive];
+                }
                 if (typeof prop === 'symbol') {
                     return (target as any)[prop as any];
                 }
@@ -493,13 +475,45 @@ const withRouterFn = <T extends RouteInputs>(prps: RoutePassthrough): FinalRoute
     return router as unknown as FinalRouteObject<T>;
 };
 
-export const routeTo = (path = 'home') => {
+type RouteInputSelectors = string | Array<string> | FinalRouteObject<RouteInputs>;
+
+export const routeTo = (...extras: RouteInputSelectors[]) => {
+
+    let path = '';
+    if (extras.length === 0 || extras[0] === 'home') {
+        path = '';
+    }
     let pathname = path;
     if (path === 'home') {
         pathname = '';
     }
+
+    const allExtras = extras.flat();
+    let extrasBuilder = [];
+    for (let i = 0; i < allExtras.length; i++) {
+
+        const v = allExtras[i];
+        if (typeof v === 'string') {
+            extrasBuilder.push(v);
+        } else if (typeof v === 'function') {
+
+            const rrte = v.getRoute();
+            console.log('Escaped route', typeof rrte);
+            console.log('RRET', rrte);
+            extrasBuilder.push(rrte);
+        } else if (typeof v !== 'string' && 'getRoute' in v) {
+
+            // extrasBuilder.push(v.getRoute());
+        } else {
+            console.error('Invalid route', v);
+            throw new Error('Invalid route');
+        }
+    }
+    pathname += allExtras.join('/');
+
     history.pushState({
         path,
+        // extras,
         pathname,
         checkItem: "yes", // Change?
     }, '', `/${pathname}`);

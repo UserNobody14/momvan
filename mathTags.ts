@@ -43,7 +43,6 @@ export const mathTags = [
 ];
 export const svgTags = [
     "svg",
-    "a",
     "altGlyph",
     "altGlyphDef",
     "altGlyphItem",
@@ -83,7 +82,6 @@ export const svgTags = [
     "feTile",
     "feTurbulence",
     "filter",
-    "font",
     "font-face",
     "font-face-format",
     "font-face-name",
@@ -94,7 +92,6 @@ export const svgTags = [
     "glyph",
     "glyphRef",
     "hkern",
-    "image",
     "line",
     "linearGradient",
     "marker",
@@ -114,7 +111,6 @@ export const svgTags = [
     "symbol",
     "text",
     "textPath",
-    "title",
     "tref",
     "tspan",
     "use",
