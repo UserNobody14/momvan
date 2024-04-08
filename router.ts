@@ -70,7 +70,7 @@ export const urlPathToActiveRoute = (urlPath: string): ActiveRoute => {
 }
 
 export const nowRoute = (): ActiveRoute => {
-    return urlPathToActiveRoute(window.location.pathname);
+    return urlPathToActiveRoute(location.pathname);
 }
 
 export const activeRoute = van.state<ActiveRoute>(nowRoute())
@@ -537,6 +537,15 @@ const withRouterFn = <T extends RouteInputs>(prps: RoutePassthrough): FinalRoute
             // display or hide the route
             const routeMatch = van.derive(() => applyRouteMatch(activeRoute.val, prps));
             const shouldNotShowRoute = van.derive(() => !routeMatch.val.show);
+            const additonalProps = van.derive(() => shouldNotShowRoute.val ? {} : prps.extraProps);
+
+            // Testing
+            // van.derive(() => {
+            //     console.log('Route match', routeMatch.val);
+            //     console.log('Route path', prps.currentRoute.path);
+            //     console.log('shouldNotShowRoute', shouldNotShowRoute.val);
+            // })
+            //
             const childDom: ReadonlyArray<ChildDom> = args.map<ChildDom | ChildDom[]>((arg) => {
                 if (typeof arg === 'function' && prps.currentRoute.hasParams) {
                     return (() => {
@@ -551,10 +560,17 @@ const withRouterFn = <T extends RouteInputs>(prps: RoutePassthrough): FinalRoute
             });
             return useBetterDiv(
                 {
-                    ...prps.extraProps,
-                    hidden: shouldNotShowRoute,
+                    class: () => additonalProps.val?.class ?? '',
+                    // class: () => additonalProps.val?.class,
+                    // style: () => additonalProps.val?.class,
                     "data-route": routeMatchToString(prps.currentRoute.path),
+                    hidden: shouldNotShowRoute,
                 },
+                // {
+                //     ...prps.extraProps,
+                //     "data-route": routeMatchToString(prps.currentRoute.path),
+                //     hidden: shouldNotShowRoute,
+                // },
                 childDom
             );
         },

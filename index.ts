@@ -1,7 +1,7 @@
 
 
 import van from "vanjs-core";
-import { createRouter, routeTo } from "./router";
+import { activeRoute, createRouter, routeTo } from "./router";
 import { wrapperFn } from "./wrapperFn";
 import { createForm } from "./formula";
 import { mathSvgAuto } from "./mathTags";
@@ -18,4 +18,4 @@ export default { tags: momvan, add: van.add, derive: van.derive, state: van.stat
     createForm: createForm,
     internal: {
         wrapperFn
-    }, createRouter: createRouter, routeTo: routeTo};
+    }, createRouter: createRouter, routeTo: routeTo, activeRoute};

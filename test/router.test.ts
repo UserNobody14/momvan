@@ -31,6 +31,42 @@ describe("Route matcher should match the right string", () => {
         expect(route.home.getRouteMatchTest('/main')).toEqual(false);
     });
 
+    it("Should not match home correctly", () => {
+        expect(route.home.addExtraProps({
+            class: "flex-1 h-full flex flex-col"
+        }).getRouteMatchTest('/main')).toEqual(false);
+    });
+
+    it("Should not match home correctly", () => {
+        expect(route.escape('').addExtraProps({
+            class: "flex-1 h-full flex flex-col"
+        }).getRouteMatchTest('/main')).toEqual(false);
+    });
+
+    it("Should not match home correctly", () => {
+        expect(route.escape('home').addExtraProps({
+            class: "flex-1 h-full flex flex-col"
+        }).getRouteMatchTest('/main')).toEqual(false);
+    });
+
+    it("Should not match home correctly", () => {
+        expect(route.home.addExtraProps({
+            class: "flex-1 h-full flex flex-col"
+        }).route1.getRouteMatchTest('/main')).toEqual(false);
+    });
+
+    it("Should not match home correctly", () => {
+        expect(route.escape('').addExtraProps({
+            class: "flex-1 h-full flex flex-col"
+        }).route2.getRoute()).toEqual('/route2');
+    });
+
+    it("Should match home correctly", () => {
+        expect(route.home.addExtraProps({
+            class: "flex-1 h-full flex flex-col"
+        }).getRouteMatchTest('/')).toEqual(true);
+    });
+
 });
 
 describe("Route matcher should match the right regex", () => {
@@ -272,7 +308,7 @@ describe("Primitive routeto tests", () => {
 
 describe("Primitive route display tests", () => {
     it("Should display the correct route", () => {
-        expect((route.any(van.tags.div('test')) as any).outerHTML).toEqual(`<div data-route="*"><div>test</div></div>`);
+        expect((route.any(van.tags.div('test')) as any).outerHTML).toEqual(`<div class="" data-route="*"><div>test</div></div>`);
     });
 
     it("Should add extra props", () => {
