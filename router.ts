@@ -64,7 +64,6 @@ export interface ActiveRoute {
 export const urlPathToActiveRoute = (urlPath: string): ActiveRoute => {
     const li = urlPath.split('/')
     const routePath = [(li[1] === '' ? 'home' : li[1]), ...li.slice(2)];
-    console.log(routePath);
     return {
         routePath,
     };
@@ -77,12 +76,9 @@ export const nowRoute = (): ActiveRoute => {
 export const activeRoute = van.state<ActiveRoute>(nowRoute())
 
 window.addEventListener('popstate', (ee) => {
-    console.log('POPSTATE', ee);
     activeRoute.val = nowRoute()
 });
 window.addEventListener('hashchange', (ee) => {
-    console.log('HASH', ee);
-    console.log('Ev', history.state);
     activeRoute.val = nowRoute()
 });
 
@@ -163,6 +159,50 @@ const routeMaster = (cr: RoutePassthrough) => {
         return failure ? '' : buildPath;
     }
 }
+
+const routeMatchToString = (rm: RouteMatcher[]): string => {
+    return rm.map((v) => {
+        if (typeof v === 'string') {
+            return v;
+        }
+        if (typeof v === 'object') {
+            if ('matchAny' in v) {
+                return '*';
+            }
+            if ('not' in v) {
+                return `!${routeMatchToString([v.not])}`;
+            }
+            if ('regex' in v) {
+                return `/${v.regex.toString()}/`;
+            }
+            if ('notRegex' in v) {
+                return `!/${v.notRegex.toString()}/`;
+            }
+            if ('optional' in v) {
+                return `[${routeMatchToString([v.optional])}]`;
+            }
+            if ('multiple' in v) {
+                return `(${routeMatchToString([v.multiple])}+)`;
+            }
+            if ('oneOf' in v) {
+                return `(${v.oneOf.map(rrm => routeMatchToString([rrm])).join('|')})`;
+            }
+            if ('allOf' in v) {
+                return `(${v.allOf.map(rrm => routeMatchToString([rrm])).join('&')})`;
+            }
+            if ('param' in v) {
+                return `:${v.param.name}`;
+            }
+            if ('escape' in v) {
+                return `\\${v.escape}`;
+            }
+            if ('fn' in v) {
+                return `(${v.fn.toString()})`;
+            }
+        }
+        return '';
+    }).join('/');
+};
 
 interface SegmentMatch {
     matches: boolean;
@@ -266,11 +306,13 @@ interface MatchResult {
     hasParams: boolean;
 }
 
-const applyRouteMatch = (activeRoute: ActiveRoute = { routePath: [] }, currentRoute: RoutePassthrough = {
+const defaultRoutePassthrough: RoutePassthrough = {
     currentRoute: {
         path: []
-    }
-}): MatchResult => {
+    },
+    extraProps: {},
+};
+const applyRouteMatch = (activeRoute: ActiveRoute = { routePath: [] }, currentRoute: RoutePassthrough = defaultRoutePassthrough): MatchResult => {
     const aPath = activeRoute.routePath;
     const cPath = currentRoute.currentRoute.path;
     let show = false,
@@ -299,8 +341,7 @@ const applyRouteMatch = (activeRoute: ActiveRoute = { routePath: [] }, currentRo
             break;
         }
     }
-    if (aIdx < aPath.length) {
-        console.log("Failed to consume all segments", aIdx, aPath.length, params, hasParams);
+    if (aIdx < aPath.length && !(aIdx === 0 && (aPath[aIdx] === '' || aPath[aIdx] === 'home'))) {
         show = false;
     }
     // }
@@ -316,14 +357,13 @@ export interface RoutePassthrough {
         path: RouteMatcher[];
         hasParams?: boolean;
     };
+    extraProps: Record<string, any>;
     baseRoute?: string;
 }
 
 
 const addPropToRoute = (prps: RoutePassthrough, prop: RouteMatcher) => {
     const cR = prps.currentRoute;
-    // const concatNext = prop?.eager ?? true;
-    // const concatPrior = cR.concatNext;
     return {
         ...prps,
         currentRoute: {
@@ -398,22 +438,22 @@ class ExtraKeyObject<T extends RouteInputs> {
 
     //// Get just the matcher object as a van property
 
-    matcher = (prps: RoutePassthrough) => {
-        const routeMatch = van.derive(() => applyRouteMatch(activeRoute.val, prps));
-        return routeMatch;
-    }
+    // matcher = (prps: RoutePassthrough) => {
+    //     const routeMatch = van.derive(() => applyRouteMatch(activeRoute.val, prps));
+    //     return routeMatch;
+    // }
 
     //// Get a goto function for the route
 
-    goto = (prps: RoutePassthrough) => {
+    // goto = (prps: RoutePassthrough) => {
 
-        return (params?: Record<string, string>) => {
+    //     return (params?: Record<string, string>) => {
 
-            // Fill in the params
-            return routeTo(routeMaster(prps)(params, activeRoute.val));
+    //         // Fill in the params
+    //         return routeTo(routeMaster(prps)(params, activeRoute.val));
 
-        }
-    }
+    //     }
+    // }
 
     getRoute = (prps: RoutePassthrough) => {
 
@@ -424,6 +464,22 @@ class ExtraKeyObject<T extends RouteInputs> {
             // Fill in the params
             const rrm = adjustedFn(params, activeRoute.val);
             return rrm;
+        }
+    }
+
+    getRouteMatchString = (prps: RoutePassthrough) => {
+        return routeMatchToString(prps.currentRoute.path);
+    }
+
+    addExtraProps = (prps: RoutePassthrough) => {
+        return (extraProps: Record<string, any>): FinalRouteObject<T> => {
+            return withRouterFn<T>({
+                ...prps,
+                extraProps: {
+                    ...prps.extraProps,
+                    ...extraProps,
+                }
+            });
         }
     }
 
@@ -484,7 +540,7 @@ const withRouterFn = <T extends RouteInputs>(prps: RoutePassthrough): FinalRoute
             const childDom: ReadonlyArray<ChildDom> = args.map<ChildDom | ChildDom[]>((arg) => {
                 if (typeof arg === 'function' && prps.currentRoute.hasParams) {
                     return (() => {
-                        const ffv = van.derive(() => {
+                        van.derive(() => {
                             console.log('Params', routeMatch.val.params);
                             return routeMatch.val;
                         });
@@ -495,7 +551,9 @@ const withRouterFn = <T extends RouteInputs>(prps: RoutePassthrough): FinalRoute
             });
             return useBetterDiv(
                 {
+                    ...prps.extraProps,
                     hidden: shouldNotShowRoute,
+                    "data-route": routeMatchToString(prps.currentRoute.path),
                 },
                 childDom
             );
@@ -543,7 +601,7 @@ export const routeTo = (...extras: RouteInputSelectors[]) => {
 
         const v = allExtras[i];
         if (typeof v === 'string') {
-            extrasBuilder.push(v);
+            extrasBuilder.push(v + '');
         } else if (typeof v === 'function') {
 
             const rrte = v.getRoute();
@@ -558,20 +616,28 @@ export const routeTo = (...extras: RouteInputSelectors[]) => {
             throw new Error('Invalid route');
         }
     }
-    pathname += allExtras.join('/');
+    pathname += allExtras.map(eea => {
+        if (eea.startsWith('/')) {
+            console.log('EEA', eea);
+            return eea.toString().slice(1);
+        } else {
+            return eea;
+        }
+    }).join('/');
+    const newPathName = `/${pathname}`;
 
     history.pushState({
         path,
         // extras,
         pathname,
         checkItem: "yes", // Change?
-    }, '', `/${pathname}`);
+    }, '', newPathName);
     window.dispatchEvent(new HashChangeEvent('hashchange'));
-
+    return newPathName;
 }
 
 export const createRouter = (r?: RoutePassthrough) => {
-    const rr = r ?? { currentRoute: { path: [] } };
+    const rr = r ?? defaultRoutePassthrough;
     const rrr = {
         ...rr,
         currentRoute: {

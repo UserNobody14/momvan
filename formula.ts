@@ -122,7 +122,7 @@
 
 import van from 'vanjs-core';
 
-import { wrapperFn } from './wrapperFn';
+import { wrapperFn, type TagMap } from './wrapperFn';
 
 /**
  * 
@@ -157,7 +157,7 @@ export const createForm = (formInputs: FormConfig) => {
 
     const state = van.state<any>({});
 
-    const inputs = new Proxy({}, {
+    const inputs = new Proxy<Record<string, TagMap["input"]>>({}, {
         get: (target, p, rec) => {
             const customInput = wrapperFn(van.tags as any, { 
                 classes: [], pathway: [],
@@ -165,11 +165,11 @@ export const createForm = (formInputs: FormConfig) => {
                     // TODO: add more input types
                     type: 'text',
                     // TODO: make input change only the field it's associated with
-                    onchange: (e: any) => {
+                    onchange: van.derive(() => (e: any) => {
                         const cc = state.val
                         const newCC = { ...cc, [p]: e.target.value };
                         state.val = newCC;
-                    },
+                    }),
                     value: () => state.val[p],
                     name: p,
                 },
@@ -196,12 +196,12 @@ export const createForm = (formInputs: FormConfig) => {
         classes: [], pathway: [],
         carryOtherProps: {
             onsubmit: (e: { preventDefault: () => void; target: HTMLFormElement | undefined; }) => {
+                const formData = new FormData(e.target);
+                // output as an object
+                const values = Object.fromEntries(formData as any);
+                state.val = values;
                 if (formInputs.onSubmit) {
                     e.preventDefault();
-                    const formData = new FormData(e.target);
-                    // output as an object
-                    const values = Object.fromEntries(formData as any);
-                    state.val = values;
                     formInputs.onSubmit(values);
                 }
             }

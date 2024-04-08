@@ -26,7 +26,7 @@ You can use the whole system easily like so:
     </head>
     <body>
         <script type="module">
-            import van from 'https://cdn.jsdelivr.net/npm/momvan@1.0.2/dist/index.js';
+            import van from 'https://cdn.jsdelivr.net/npm/momvan@1.0.3/dist/index.js';
 
             // setup tags the standard van way
             const {
@@ -134,7 +134,7 @@ const myTailwindDiv = div({ class: "bg-red-500 text-white" }, "Hello, world!");
 This is a router that can be used to create a single page application.
 It is designed to be used with the `vanjs` library, and to be very compact.
 
-An example of how to use this router is as follows:
+You can use it like so:
 
 ```typescript
 import van from 'momvan'
@@ -160,7 +160,7 @@ route.user[':id'](params => div(`User ${params?.id}`))
 
 This is a system for writing forms in vanjs.
 
-First you call "createForm", like so:
+Simply call "createForm", like so:
 
 ```typescript
 import van from 'momvan';

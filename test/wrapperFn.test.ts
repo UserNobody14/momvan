@@ -236,4 +236,11 @@ describe('Should work with state', () => {
         expect(myTailwindDiv.getAttribute('data-state')).toEqual('1');
     });
 
+    it('Should not cause problems with typeof', async () => {
+        const { div } = momvan;
+        expect(() => typeof div).not.toThrow();
+        expect(() => typeof div.bgRed500).not.toThrow();
+        expect(() => div.bgRed500.prototype).not.toThrow();
+    });
+
 });

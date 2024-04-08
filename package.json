@@ -2,7 +2,7 @@
   "name": "momvan",
   "module": "index.ts",
   "type": "module",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A simple library for adding classes to vanjs",
   "scripts": {
     "build": "bun run build.mjs",
@@ -26,7 +26,11 @@
   },
   "keywords": [
     "vanjs",
-    "momvan"
+    "momvan",
+    "classes",
+    "routing",
+    "frontend",
+    "vanilla"
   ],
   "homepage": "https://github.com/UserNobody14/momvan.git#readme",
   "author": "UserNobody14",
