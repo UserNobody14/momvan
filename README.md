@@ -26,7 +26,7 @@ You can use the whole system easily like so:
     </head>
     <body>
         <script type="module">
-            import van from 'https://cdn.jsdelivr.net/npm/momvan@1.0.1/dist/index.js';
+            import van from 'https://cdn.jsdelivr.net/npm/momvan@1.0.2/dist/index.js';
 
             // setup tags the standard van way
             const {

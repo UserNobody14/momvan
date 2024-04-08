@@ -2,7 +2,7 @@
   "name": "momvan",
   "module": "index.ts",
   "type": "module",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A simple library for adding classes to vanjs",
   "scripts": {
     "build": "bun run build.mjs",

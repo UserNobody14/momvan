@@ -61,13 +61,17 @@ export interface ActiveRoute {
     routePath: string[];
 }
 
-export const nowRoute = (): ActiveRoute => {
-    const li = location.pathname.split('/')
+export const urlPathToActiveRoute = (urlPath: string): ActiveRoute => {
+    const li = urlPath.split('/')
     const routePath = [(li[1] === '' ? 'home' : li[1]), ...li.slice(2)];
     console.log(routePath);
     return {
         routePath,
     };
+}
+
+export const nowRoute = (): ActiveRoute => {
+    return urlPathToActiveRoute(window.location.pathname);
 }
 
 export const activeRoute = van.state<ActiveRoute>(nowRoute())
@@ -123,7 +127,7 @@ const routeMaster = (cr: RoutePassthrough) => {
                     failure = true;
                 }
             } else if (typeof v === 'string') {
-                buildPath += `/${v}`;
+                buildPath += `/${v === 'home' ? '' : v}`;
             } else if (typeof v === 'object') {
                 if (
                     ('matchAny' in v) || ('multiple' in v) || ('oneOf' in v) || ('allOf' in v) ||
@@ -171,22 +175,21 @@ const matchSegment = (segment: string, prop: RouteMatcher, furtherSegments = [])
     let params: Record<string, string> = {};
     if (typeof prop !== 'string') {
         if (typeof prop === 'object') {
-            console.log("Prop", prop);
             if ('matchAny' in prop) {
                 return { matches: true, increment: 1 };
             }
             if ('not' in prop) {
                 const smatch = matchSegment(segment, prop.not);
-                return { matches: !smatch.matches, increment: 0 };
+                return { matches: !smatch.matches, increment: 1 };
             }
             if ('regex' in prop) {
                 return {
-                    matches: prop.regex.test(segment),
+                    matches: prop.regex.test(segment === 'home' ? '' : segment),
                 };
             }
             if ('notRegex' in prop) {
                 return {
-                    matches: !prop.notRegex.test(segment),
+                    matches: !prop.notRegex.test(segment === 'home' ? '' : segment),
                 };
             }
             if ('optional' in prop) {
@@ -257,11 +260,17 @@ const matchSegment = (segment: string, prop: RouteMatcher, furtherSegments = [])
     return { matches: segment === prop };
 }
 
+interface MatchResult {
+    show: boolean;
+    params: Record<string, string>;
+    hasParams: boolean;
+}
+
 const applyRouteMatch = (activeRoute: ActiveRoute = { routePath: [] }, currentRoute: RoutePassthrough = {
     currentRoute: {
         path: []
     }
-}) => {
+}): MatchResult => {
     const aPath = activeRoute.routePath;
     const cPath = currentRoute.currentRoute.path;
     let show = false,
@@ -337,8 +346,8 @@ export type ExtraKeysAsFinal<T extends RouteInputs> = {
 };
 export type FinalRouteObject<T extends RouteInputs> = RecursiveRouteMap<T> & ExtraKeysAsFinal<T> & TagFunc<T>;
 
-const matchKeyFn = <A, B extends RouteMatcher, T extends RouteInputs>(fn: (a: A) => B) => (route: RoutePassthrough) => (prop: A): FinalRouteObject<T> => {
-    return withRouterFn<T>(
+const matchKeyFn = <A, B extends RouteMatcher, T extends RouteInputs>(fn: (a: A) => B) => {
+    return (route: RoutePassthrough) => (prop: A): FinalRouteObject<T> => withRouterFn<T>(
         addPropToRoute(route, fn(prop))
     )
 }
@@ -414,10 +423,50 @@ class ExtraKeyObject<T extends RouteInputs> {
 
             // Fill in the params
             const rrm = adjustedFn(params, activeRoute.val);
-            console.log("COMPLETED ROUTEMASTERE!", typeof rrm);
-            console.log("COMPLETED ROUTEMASTERE!", rrm);
-            //
             return rrm;
+        }
+    }
+
+    // For testing purposes
+
+    getRouteMatchTest = (prps: RoutePassthrough) => {
+
+        return (exampleUrl: string): boolean => {
+            const rmmm = applyRouteMatch(urlPathToActiveRoute(exampleUrl), prps);
+            return rmmm.show;
+
+            // const adjustedFn = routeMaster(prps);
+
+            // // Fill in the params
+            // const rrm = adjustedFn(rmmm.params, activeRoute.val);
+            // console.log("COMPLETED ROUTEMASTERE!", typeof rrm);
+            // console.log("COMPLETED ROUTEMASTERE!", rrm);
+            // //
+            // return rrm;
+        }
+    }
+
+    getPassthrough = (prps: RoutePassthrough) => {
+
+        return prps;
+    }
+
+    // For testing purposes
+
+    getRouteMatchFull = (prps: RoutePassthrough) => {
+
+        return (exampleUrl: string): MatchResult => {
+            const rmmm = applyRouteMatch(urlPathToActiveRoute(exampleUrl), prps);
+            return rmmm;
+
+            // const adjustedFn = routeMaster(prps);
+
+            // // Fill in the params
+            // const rrm = adjustedFn(rmmm.params, activeRoute.val);
+            // console.log("COMPLETED ROUTEMASTERE!", typeof rrm);
+            // console.log("COMPLETED ROUTEMASTERE!", rrm);
+            // //
+            // return rrm;
         }
     }
 
